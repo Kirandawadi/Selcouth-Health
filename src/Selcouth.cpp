@@ -12,35 +12,72 @@ void States_Manager::Assign_State(int state)
   //Interrupt_High
 }
 
-int Temperature_Sensor::Turn_On_Gun(int sec)
+void Temperature_Sensor::Pins_Initializations()
 {
-  return 0;
+  pinMode(Gun_Power_Pin,OUTPUT);
+  pinMode(Gun_Eeprom_Power_Pin,OUTPUT);
+  pinMode(Gun_Trig_Pin,INPUT);
+  digitalWrite(Gun_Trig_Pin,INPUT_PULLUP);
+}
+
+void Temperature_Sensor::Turn_On_Gun()
+{
+  digitalWrite(Gun_Power_Pin,HIGH);
 }
 
 void Temperature_Sensor::Turn_Off_Gun()
 {
+  digitalWrite(Gun_Power_Pin,LOW);
 }
 
-void Temperature_Sensor::Turn_On_Eeprom(int sec)
+void Temperature_Sensor::Turn_On_Eeprom()
 {
+  digitalWrite(Gun_Eeprom_Power_Pin,HIGH);
 }
 
 void Temperature_Sensor::Turn_Off_Eeprom()
 {
+  digitalWrite(Gun_Eeprom_Power_Pin,LOW);
 }
 
-void Temperature_Sensor::Eeprom_Erase()
+void Temperature_Sensor::Eeprom_Erase(int deviceaddress, unsigned int eeaddress, byte data)
 {
+  for(int i=0;i<100;i++)
+  {
+    Wire.beginTransmission(deviceaddress);
+    Wire.write((int)(eeaddress & 0xFF)); // LSB
+    Wire.write(data);
+    Wire.endTransmission();
+    eeaddress = i;
+    delay(10);
+  }
 }
 
 void Temperature_Sensor::Get_Data()
 {
+  int x;
+  uint8_t rdata = 0xFF;
+  Serial.println("Receiving from Eeprom \n");
+    for(int i=80; i<82; i++)
+    {
+      Wire.beginTransmission(disk1);
+      Wire.write((int)(i)); // LSB
+      Wire.endTransmission();
+     
+      Wire.requestFrom(disk1,1 );
+      rdata  =Wire.read(); 
+      x = i-80;
+      data_array[x] = rdata;
+      delay(10);
+    } 
+    temperature = ((data_array[1]<<8)|(data_array[0]))/100.0;
 }
 
 void BP_Meter::Pins_Initializations()
 {
   pinMode(BP_Power_Pin,OUTPUT);
   pinMode(BP_Measure_Pin,OUTPUT);
+  digitalWrite(BP_Measure_Pin,HIGH); //Try INPUT_PULLUP also here!!!!!!!!!!!!!!!!!!!!!!
 }
 void BP_Meter::Turn_On()
 {
