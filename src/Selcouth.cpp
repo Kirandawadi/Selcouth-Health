@@ -3,7 +3,7 @@
 #include "Selcouth.h"
 #include <Wire.h>
 
-uint8_t data_array[2] = {0};
+uint8_t data_array[3] = {0};
 
 void States_Manager::Assign_State(int state)
 {
@@ -36,7 +36,11 @@ void Temperature_Sensor::Get_Data()
 {
 }
 
-
+void BP_Meter::Pins_Initializations()
+{
+  pinMode(BP_Power_Pin,OUTPUT);
+  pinMode(BP_Measure_Pin,OUTPUT);
+}
 void BP_Meter::Turn_On()
 {
 digitalWrite(BP_Power_Pin,HIGH);
@@ -47,7 +51,7 @@ void BP_Meter::Turn_Off()
  digitalWrite(BP_Power_Pin,LOW);
 }
 
-void BP_Meter::Start_Measuring(int sec)
+void BP_Meter::Start_Measuring()
 {
    digitalWrite(BP_Measure_Pin,LOW);
    delay(200);
@@ -70,9 +74,8 @@ void BP_Meter::Eeprom_Erase(int deviceaddress, unsigned int eeaddress, byte data
 void BP_Meter::Get_Data()
 {
   uint8_t rdata = 0xFF;
-  
   Serial.println("Receiving from Eeprom \n");
-    for(int i=80; i<82; i++)
+    for(int i=0; i<3; i++)
     {
       Wire.beginTransmission(disk1);
       Wire.write((int)(i)); // LSB
@@ -88,6 +91,10 @@ void BP_Meter::Get_Data()
       data_array[i] = rdata;
       delay(10);
     }
+
+    Systolic_Pressure = data_array[0];
+    Diastolic_Pressure = data_array[1];
+    Heart_Beat = data_array[2];
 
 
 }

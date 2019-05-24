@@ -28,6 +28,7 @@ class Temperature_Sensor
     void Get_Data();
   private:
     int Chip_Power_Pin,Eeprom_Power_Pin,Gun_Trigger_Pin;
+    float temperature;
 };
 
 class BP_Meter
@@ -35,13 +36,15 @@ class BP_Meter
   public:
   BP_Meter(int _Power_Pin,int _Measure_Pin):
   Power_Pin(_Power_Pin) , Measure_Pin(_Measure_Pin){}
+  void Pins_Initializations();
   void Turn_On();
   void Turn_Off();
-  void Start_Measuring(int sec);
+  void Start_Measuring();
   void Eeprom_Erase(int deviceaddress, unsigned int eeaddress, byte data );
   void Get_Data();
   private:
   int Power_Pin,Measure_Pin;
+  unsigned int Systolic_Pressure, Diastolic_Pressure, Heart_Beat;
 };
 
 class ECG
