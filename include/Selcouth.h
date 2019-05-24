@@ -42,9 +42,9 @@ class BP_Meter
   void Start_Measuring();
   void Eeprom_Erase(int deviceaddress, unsigned int eeaddress, byte data );
   void Get_Data();
+  int Systolic_Pressure, Diastolic_Pressure, Heart_Beat;
   private:
   int Power_Pin,Measure_Pin;
-  unsigned int Systolic_Pressure, Diastolic_Pressure, Heart_Beat;
 };
 
 class ECG
