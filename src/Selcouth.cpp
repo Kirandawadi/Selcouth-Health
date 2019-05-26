@@ -16,21 +16,25 @@ void Temperature_Sensor::Pins_Initializations()
 {
   pinMode(Gun_Power_Pin,OUTPUT);
   pinMode(Gun_Eeprom_Power_Pin,OUTPUT);
+  pinMode(LED_BUILTIN,OUTPUT);
   pinMode(Gun_Trig_Pin,INPUT);
+  digitalWrite(Gun_Eeprom_Power_Pin,LOW);
+  digitalWrite(Gun_Power_Pin,LOW);
   digitalWrite(Gun_Trig_Pin,INPUT_PULLUP);
 }
 
 void Temperature_Sensor::Turn_On_Gun()
 {
+  pinMode(Gun_Power_Pin,OUTPUT);
   digitalWrite(Gun_Power_Pin,HIGH);
 }
 
 void Temperature_Sensor::Turn_Off_Gun()
 {
-  digitalWrite(Gun_Power_Pin,LOW);
+  pinMode(Gun_Power_Pin,INPUT);
 }
 
-void Temperature_Sensor::Turn_On_Eeprom()
+void Temperature_Sensor::Turn_On_Eeprom()       //Check Later if Eeprom OFF requires high Z state or not!!!!!!!!!!!!!!!!!
 {
   digitalWrite(Gun_Eeprom_Power_Pin,HIGH);
 }
@@ -58,19 +62,22 @@ void Temperature_Sensor::Get_Data()
   int x;
   uint8_t rdata = 0xFF;
   Serial.println("Receiving from Eeprom \n");
-    for(int i=80; i<82; i++)
+    for(int i=79; i<82; i++)
     {
       Wire.beginTransmission(disk1);
       Wire.write((int)(i)); // LSB
       Wire.endTransmission();
      
       Wire.requestFrom(disk1,1 );
-      rdata  =Wire.read(); 
-      x = i-80;
-      data_array[x] = rdata;
+      //rdata  =Wire.read(); 
+      Serial.print(Wire.read(),HEX);
+      Serial.write("\n");
+     // x = i-80;
+     // data_array[x] = rdata;
       delay(10);
     } 
-    temperature = ((data_array[1]<<8)|(data_array[0]))/100.0;
+   // temperature = ((data_array[1]<<8)|(data_array[0]))/100.0;
+    //Serial.print(temperature);
 }
 
 void BP_Meter::Pins_Initializations()
