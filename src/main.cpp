@@ -14,16 +14,18 @@ int Temp_Measuring_State = 0;
 void readEEPROM(int deviceaddress, unsigned int eeaddress );
 void eraseEEPROM(int deviceaddress, unsigned int eeaddress, byte data );
 
+ /**************Creating Objects************/
 Temperature_Sensor temp(Gun_Power_Pin,Gun_Eeprom_Power_Pin,Gun_Trig_Pin);
+BP_Meter bp(BP_Power_Pin,BP_Measure_Pin);
+
+
+/*******************Gun Specials*********************/
 
 void setup(void)
 {
   Wire.begin(disk1);  
   Serial.begin(9600);
-
   temp.Pins_Initializations();
-  //temp.Turn_On_Eeprom();
-  //temp.Turn_On_Gun();
 }
  
 void loop(){
@@ -59,33 +61,7 @@ if(Temp_Measuring_State == 1)
   Serial.print("The temperature is ");
   Serial.print(temperature);
   eraseEEPROM(disk1, address,0);
-   /* switch(data)
-    {
-      case 'e':
-            eraseEEPROM(disk1, address,0);
-            Serial.write("Erased");
-            break;
-
-      case 'r':
-            readEEPROM(disk1, address );
-            temperature = ((data_array[2]<<8)|(data_array[1]))/100.0;
-            Serial.print(temperature);
-            eraseEEPROM(disk1, address,0);
-            break;
-            
-      case '0':
-             temp.Turn_Off_Gun();
-             Serial.write("I am low");
-             break;
-
-      case '1':
-       temp.Turn_On_Gun();
-       Serial.write("I am high");
-       break;
-
-      default:
-      break;
-    }*/
+  Temp_Measuring_State = 0;
   }
   }
  
@@ -98,7 +74,6 @@ void eraseEEPROM(int deviceaddress, unsigned int eeaddress, byte data )
     Wire.write(data);
     Wire.endTransmission();
     eeaddress = i ;
-   // delay(1);
    Serial.print(i);
     Serial.write("Erasing");
   }
@@ -116,18 +91,11 @@ void readEEPROM(int deviceaddress, unsigned int eeaddress )
       Wire.beginTransmission(deviceaddress);
       Wire.write((int)(i)); // LSB
       Wire.endTransmission();
-     
       Wire.requestFrom(deviceaddress,1 );
-//      Serial.print(i);
-//      Serial.print('\t');
       rdata = Wire.read();
-      //Serial.print(Wire.read(),HEX);
-      // Serial.print(rdata,HEX);
-      // Serial.print('\n');  
       delay(10);
       data_array[x] = rdata;
     }
-   // Serial.print("I am out");
 }
 // #include <Arduino.h>
 // #include <Selcouth.h>
@@ -138,67 +106,8 @@ void readEEPROM(int deviceaddress, unsigned int eeaddress )
 // int Temp_Measuring_State = 0;
 // int BP_Measuring_State = 0;
 
-// /**************Creating Objects************/
-// Temperature_Sensor temp(Gun_Power_Pin,Gun_Eeprom_Power_Pin,Gun_Trig_Pin);
-// BP_Meter bp(BP_Power_Pin,BP_Measure_Pin);
 
-// void setup()
-// {
-//   Wire.begin(disk1);
-//   Serial.begin(9600);
-//   temp.Pins_Initializations();
-//   temp.Turn_On_Eeprom();
-//   delay(1000);
-//   // temp.Get_Data();
-//   // delay(1000);
-//   //temp.Eeprom_Erase(disk1,address,3);
-//   //
-// }
-
-// void loop()
-// {
-//   // Wire.requestFrom(disk1,6);
-//   //     while(Wire.available()){
-//   //       char c= Wire.read();
-//   //       Serial.print(c);
-//   //     }
-//   //     delay(500);
-//   //Serial.print(digitalRead(Gun_Trig_Pin));
-//   if(Serial.available())
-//   {
-//     char data1 = char(Serial.read());
-//     if( data1 == 'r')
-//     {
-//       temp.Turn_On_Gun();
-//       delay(500);
-//       Temp_Measuring_State = 1;
-//     }
-//   }
-
-//   if(Temp_Measuring_State == 1)
-//   {
-//     digitalWrite(LED_BUILTIN,HIGH);
-//     //wait until the trigger is pulled LOW
-//     for(int i=0;i<40;i++)
-//     {
-//       Serial.print(digitalRead(Gun_Trig_Pin));
-//     }
-
-//     while(digitalRead(Gun_Trig_Pin) ==1);
-//     //Wait again for it to be high
-//     delay(10000);
-//     pinMode(Gun_Power_Pin,INPUT);
-//   //  temp.Turn_Off_Gun();
-//     delay(1000);
-//     temp.Get_Data();
-//     Serial.print("Data got");
-//     delay(2000);
-//     // temp.Eeprom_Erase(disk1,address,0);
-//     // Serial.print("Erased");
-//     Temp_Measuring_State = 0;
-//   }
-// }
-
+/*****************BP Specials*********************/
 /********************************WORKING CODE************************/
 // /*
 // void setup()
