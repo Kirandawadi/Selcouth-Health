@@ -1,0 +1,20 @@
+Temperature Gun:
+
+-> Eeprom must be at erased condition before turning ON the system.
+-> After measuring request , turn Eeprom Power at first and after certain delay turn ON 
+  the Chip Power
+-> Take reading.But this reading feedback is taken through the Trigger Button(that goes
+   LOW on pressing it)
+-> After measure is detected, turn OFF the Chip Power(Must important!!) .Then request for the valid
+   data which always resides in Location 80(Lower Byte) and 81(Higher Byte).
+-> After read operation, always erase the Chip from Locations 0 to 10(may be changed, I don't know)
+   to ensure that that the Eeprom is in state as described in the first point.
+
+
+BP Meter:
+
+-> After measuring request, turn ON the merely power to the system.After certain delay
+  pull the Measuring Pin LOW!
+-> This is Open Loop System. We do not know when will the measuring finish, So wait
+   for some seconds (may be 50) after which it will finish its measuring.
+->Then erase the Eeprom (by putting SOMETHING(1) in address 0) and turn off the meter.

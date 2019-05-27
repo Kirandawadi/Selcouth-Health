@@ -8,6 +8,8 @@
 #define Gun_Trig_Pin 7
 #define BP_Power_Pin 8
 #define BP_Measure_Pin 9
+#define INT1 10
+#define INT2 11
 
 #define disk1 0x50
 

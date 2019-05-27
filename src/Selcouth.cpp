@@ -5,6 +5,7 @@
 
 int data_array[3] = {0};
 char char_array[100];
+extern void Ready_To_Send(void);
 
 void States_Manager::Assign_State(int state)
 {
@@ -96,6 +97,7 @@ void BP_Meter::Turn_Off()
  digitalWrite(BP_Power_Pin,LOW);
 }
 
+
 void BP_Meter::Start_Measuring()
 {
    digitalWrite(BP_Measure_Pin,LOW);
@@ -109,6 +111,7 @@ void BP_Meter::Eeprom_Erase(int deviceaddress, unsigned int eeaddress, byte data
     Wire.write((int)(eeaddress & 0xFF)); // LSB
     Wire.write(data);
     Wire.endTransmission();
+    Serial.write("Written 1");
     delay(10);
 }
 
@@ -117,20 +120,20 @@ void BP_Meter::Get_Data()
   int x;
   uint8_t rdata = 0xFF;
   Serial.println("Receiving from Eeprom \n");
-    for(int i=8; i<11; i++)
+    for(int i=0; i<20; i++)
     {
       Wire.beginTransmission(disk1);
       Wire.write((int)(i)); // LSB
       Wire.endTransmission();
      
       Wire.requestFrom(disk1,1 );
-      // Serial.print(i);
-      // Serial.print('\t');
+      Serial.print(i);
+      Serial.print('\t');
       rdata  =Wire.read();
-     // Serial.print(rdata,DEC);
-      //Serial.print('\n');  
+     Serial.print(rdata,DEC);
+      Serial.print('\n');  
       x = i-8;
-      data_array[x] = rdata;
+     // data_array[x] = rdata;
       delay(10);
     }
 
@@ -141,6 +144,8 @@ void BP_Meter::Get_Data()
    delay(1000);
    sprintf(char_array,"Systolic = %d\nDiastolic = %d\nHeart_Beat = %d\n ",Systolic_Pressure,Diastolic_Pressure,Heart_Beat);
    Serial.println(char_array);
+   Ready_To_Send();
+   Serial1.println(char_array);
 }
 
 void ECG::Start_Converison()
