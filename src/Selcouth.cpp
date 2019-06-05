@@ -3,14 +3,22 @@
 #include "Selcouth.h"
 #include <Wire.h>
 
-int data_array[3] = {0};
+int data_array[20] = {0};
 char char_array[100];
 extern void Ready_To_Send(void);
+extern float temperature;
 
-void States_Manager::Assign_State(int state)
+void HandShake_Config(void)
 {
-  //Serial_Event
-  //Interrupt_High
+  pinMode(INTERRUPT1,OUTPUT);
+  digitalWrite(INTERRUPT1,HIGH);
+}
+
+void Ready_To_Send(void)
+{
+ digitalWrite(INTERRUPT1,LOW);
+ delay(1000);
+ digitalWrite(INTERRUPT1,HIGH);
 }
 
 void Temperature_Sensor::Pins_Initializations()
@@ -47,38 +55,44 @@ void Temperature_Sensor::Turn_Off_Eeprom()
 
 void Temperature_Sensor::Eeprom_Erase(int deviceaddress, unsigned int eeaddress, byte data)
 {
-  for(int i=0;i<100;i++)
+  for(int i=0; i<10; i++)
   {
     Wire.beginTransmission(deviceaddress);
     Wire.write((int)(eeaddress & 0xFF)); // LSB
     Wire.write(data);
     Wire.endTransmission();
-    eeaddress = i;
-    delay(10);
+    eeaddress = i ;
+   Serial.print(i);
+    Serial.write("Erasing");
   }
 }
 
 void Temperature_Sensor::Get_Data()
 {
-  int x;
+  int x = 0;
   uint8_t rdata = 0xFF;
   Serial.println("Receiving from Eeprom \n");
-    for(int i=79; i<82; i++)
+    for(int i=79; i<83; i++)
     {
+      x= i-79;
       Wire.beginTransmission(disk1);
       Wire.write((int)(i)); // LSB
       Wire.endTransmission();
-     
       Wire.requestFrom(disk1,1 );
-      //rdata  =Wire.read(); 
-      Serial.print(Wire.read(),HEX);
-      Serial.write("\n");
-     // x = i-80;
-     // data_array[x] = rdata;
+      rdata  =Wire.read(); 
       delay(10);
+      //Serial.print(rdata);
+     data_array[x] = rdata;
     } 
-   // temperature = ((data_array[1]<<8)|(data_array[0]))/100.0;
-    //Serial.print(temperature);
+   temperature = ((data_array[2]<<8)|(data_array[1]))/100.0;
+   Serial.print("Data Taken  ");
+   Serial.print(temperature);
+   if(((int)temperature>42) || ((int)temperature <34))
+    {
+      delay(1000);
+      Serial.print("Retaking Data!");
+      Get_Data();
+    }
 }
 
 void BP_Meter::Pins_Initializations()
@@ -120,7 +134,7 @@ void BP_Meter::Get_Data()
   int x;
   uint8_t rdata = 0xFF;
   Serial.println("Receiving from Eeprom \n");
-    for(int i=0; i<20; i++)
+    for(int i=0; i<15; i++)
     {
       Wire.beginTransmission(disk1);
       Wire.write((int)(i)); // LSB
@@ -132,8 +146,9 @@ void BP_Meter::Get_Data()
       rdata  =Wire.read();
      Serial.print(rdata,DEC);
       Serial.print('\n');  
-      x = i-8;
-     // data_array[x] = rdata;
+      // x = i-8;
+      // data_array[x] = rdata;
+      data_array[i]=rdata;
       delay(10);
     }
 
@@ -142,12 +157,19 @@ void BP_Meter::Get_Data()
     Heart_Beat = data_array[2];
 
    delay(1000);
-   sprintf(char_array,"Systolic = %d\nDiastolic = %d\nHeart_Beat = %d\n ",Systolic_Pressure,Diastolic_Pressure,Heart_Beat);
-   Serial.println(char_array);
+   sprintf(char_array,"%ds%dd%dh",Systolic_Pressure,Diastolic_Pressure,Heart_Beat);
+   Serial.write(char_array);
+
+   Serial1.write(char_array);
    Ready_To_Send();
-   Serial1.println(char_array);
+   Serial1.write(char_array);
 }
 
+int Height_Measurement::Get_Height(int unit)
+{
+  return 0;
+  
+}
 void ECG::Start_Converison()
 {
 

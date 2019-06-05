@@ -9,6 +9,9 @@
 #define BUSY_STATE 1
 #define FREE_STATE 0
 
+void HandShake_Config(void);
+void Ready_To_Send(void);
+
 class States_Manager
 {
   public:
@@ -29,7 +32,6 @@ class Temperature_Sensor
     void Get_Data();
   private:
     int Chip_Power_Pin,Eeprom_Power_Pin,Gun_Trigger_Pin;
-    float temperature;
 };
 
 class BP_Meter
@@ -46,6 +48,14 @@ class BP_Meter
   int Systolic_Pressure, Diastolic_Pressure, Heart_Beat;
   private:
   int Power_Pin,Measure_Pin;
+};
+
+class Height_Measurement
+{
+  public:
+  int Get_Height(int unit);
+  private:
+  int height_cms;
 };
 
 class ECG
