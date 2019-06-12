@@ -24,6 +24,7 @@ void Erase_hardware_I2C();
 Temperature_Sensor temp(Gun_Power_Pin,Gun_Eeprom_Power_Pin,Gun_Trig_Pin);
 BP_Meter bp(BP_Power_Pin,BP_Measure_Pin);
 SlowSoftI2CMaster si = SlowSoftI2CMaster(24, 26, true);
+SlowSoftI2CMaster gun_I2C = SlowSoftI2CMaster(20, 21, true);
 
 //*******************Gun Specials********************
 
@@ -32,7 +33,7 @@ void setup(void)
   HandShake_Config();
   Serial.begin(9600);
   Serial3.begin(9600);
-  Wire.begin(disk1);  
+  //Wire.begin(disk1);  
 
   temp.Pins_Initializations();
   bp.Pins_Initializations();
@@ -41,16 +42,13 @@ void setup(void)
   //delay(3000);
   Serial.print("Resetted");
 
-   sprintf(char_array,"%ds%dd%dh",Systolic_Pressure,Diastolic_Pressure,Heart_Beat);
-   
-
 }
  
 void loop(){ 
 
- if(Serial3.available())
+ if(Serial.available())
   {
-    data = char(Serial3.read());
+    data = char(Serial.read());
     if(data == '0')
     {
       delay(2000);
@@ -114,30 +112,74 @@ if(Temp_Measuring_State == 1)
     Serial.print("I am HIGH\n");
     delay(100);
   }
- // delay(15000);
   Serial.print("I am pressed\n");
 
   Serial.print("Now its time to turn off relay");
-  delay(10000);
-  //temp.Turn_Off_Eeprom();
+  delay(6000);
   temp.Turn_Off_Gun();
-  Ready_To_Send();
-  Serial3.print("y");
-  Ready_To_Send();
+  delay(1000);
+  if (!gun_I2C.i2c_init()) // initialize I2C module
+  Serial.println("I2C init failed");
+
+  if (!gun_I2C.i2c_start((disk1<<1)|I2C_WRITE)) { // init transfer
+        Serial.println("I2C device busy");
+        return;
+    }
+
+    for(int i=80;i<95;i++)
+    {
+    gun_I2C.i2c_write(i); // send memory to device
+    gun_I2C.i2c_rep_start((disk1<<1)|I2C_READ); // restart for reading
+    data_array[i] = gun_I2C.i2c_read(true); // read one byte and send NAK afterwards
+    gun_I2C.i2c_stop(); // stop communication
+    Serial.print(i);
+    Serial.print("  ");
+    Serial.println(data_array[i],HEX);
+    delay(10);
+    }
+    temperature = ((data_array[93]<<8)|(data_array[92]))/100.0;
+    Serial.print("The temperature is ");
+    Serial.print(temperature);
+
+      if (!gun_I2C.i2c_start((disk1<<1)|I2C_WRITE)) { // init transfer
+        Serial.println("I2C device busy");
+        return;
+    }
+
+for(int i = 0;i<11;i++)
+{
+    gun_I2C.i2c_write(i); // send memory to device
+    gun_I2C.i2c_write(0);
+    gun_I2C.i2c_stop(); // stop communication
+    Serial.write("Erased");
+}
+  // Ready_To_Send();1
+  // Serial3.print("y");
+  // Ready_To_Send();
   
   Temp_Measuring_State = 0;
   }
 
   else if(BP_Measuring_State == 1)
 {
-  delay(53000);
+  pinMode(26,INPUT);
+  digitalWrite(26,INPUT_PULLUP);
+  delay(6000);
+  
+    while(digitalRead(26) !=0)
+  {
+    Serial.print("High\n");
+    //delay(100);
+  }
+
+   Serial.print("Out of LOOP\n");
+  delay(2000);
   if (!si.i2c_init()) // initialize I2C module
   Serial.println("I2C init failed");
 
   Read_hardware_I2C();
   BP_Measuring_State = 0;
   Erase_hardware_I2C();
-
 }
   }
  
@@ -193,10 +235,19 @@ void Read_hardware_I2C()
     Serial.println(data_array[i]);
     }
 
+    if(data_array[0]>20)
+    {
+    Systolic_Pressure = data_array[0];
+    Diastolic_Pressure = data_array[1];
+    Heart_Beat = data_array[2];
+    }
+    else
+    {
     Systolic_Pressure = data_array[8];
     Diastolic_Pressure = data_array[9];
-    Heart_Beat = data_array[10];
-
+    Heart_Beat = data_array[10]; 
+}
+    
    delay(1000);
    sprintf(char_array,"%ds%dd%dh",Systolic_Pressure,Diastolic_Pressure,Heart_Beat);
    Serial.write(char_array);
