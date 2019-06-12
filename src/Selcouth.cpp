@@ -4,21 +4,21 @@
 #include <Wire.h>
 
 int data_array[20] = {0};
-char char_array[100];
+extern char *char_array;
 extern void Ready_To_Send(void);
 extern float temperature;
 
 void HandShake_Config(void)
 {
-  pinMode(INTERRUPT1,OUTPUT);
-  digitalWrite(INTERRUPT1,HIGH);
+  pinMode(INTERRUPT,OUTPUT);
+  digitalWrite(INTERRUPT,HIGH);
 }
 
 void Ready_To_Send(void)
 {
- digitalWrite(INTERRUPT1,LOW);
+ digitalWrite(INTERRUPT,LOW);
  delay(1000);
- digitalWrite(INTERRUPT1,HIGH);
+ digitalWrite(INTERRUPT,HIGH);
 }
 
 void Temperature_Sensor::Pins_Initializations()
@@ -26,10 +26,10 @@ void Temperature_Sensor::Pins_Initializations()
   pinMode(Gun_Power_Pin,OUTPUT);
   pinMode(Gun_Eeprom_Power_Pin,OUTPUT);
   pinMode(LED_BUILTIN,OUTPUT);
-  pinMode(Gun_Trig_Pin,INPUT);
+  pinMode(Gun_Trig_Pin,OUTPUT);
   digitalWrite(Gun_Eeprom_Power_Pin,LOW);
   digitalWrite(Gun_Power_Pin,LOW);
-  digitalWrite(Gun_Trig_Pin,INPUT_PULLUP);
+  digitalWrite(Gun_Trig_Pin,LOW);
 }
 
 void Temperature_Sensor::Turn_On_Gun()
@@ -40,7 +40,8 @@ void Temperature_Sensor::Turn_On_Gun()
 
 void Temperature_Sensor::Turn_Off_Gun()
 {
-  pinMode(Gun_Power_Pin,INPUT);
+  pinMode(Gun_Power_Pin,OUTPUT);
+  digitalWrite(Gun_Power_Pin,LOW);
 }
 
 void Temperature_Sensor::Turn_On_Eeprom()       //Check Later if Eeprom OFF requires high Z state or not!!!!!!!!!!!!!!!!!
@@ -100,6 +101,7 @@ void BP_Meter::Pins_Initializations()
   pinMode(BP_Power_Pin,OUTPUT);
   pinMode(BP_Measure_Pin,OUTPUT);
   digitalWrite(BP_Measure_Pin,HIGH); //Try INPUT_PULLUP also here!!!!!!!!!!!!!!!!!!!!!!
+  digitalWrite(BP_Power_Pin,LOW);
 }
 void BP_Meter::Turn_On()
 {
@@ -115,7 +117,7 @@ void BP_Meter::Turn_Off()
 void BP_Meter::Start_Measuring()
 {
    digitalWrite(BP_Measure_Pin,LOW);
-   delay(200);
+   delay(1000);
    digitalWrite(BP_Measure_Pin,HIGH);
 }
 
@@ -152,9 +154,9 @@ void BP_Meter::Get_Data()
       delay(10);
     }
 
-    Systolic_Pressure = data_array[0];
-    Diastolic_Pressure = data_array[1];
-    Heart_Beat = data_array[2];
+    Systolic_Pressure = data_array[8];
+    Diastolic_Pressure = data_array[9];
+    Heart_Beat = data_array[10];
 
    delay(1000);
    sprintf(char_array,"%ds%dd%dh",Systolic_Pressure,Diastolic_Pressure,Heart_Beat);
