@@ -60,7 +60,6 @@ void loop(){
     else if(data == '2')
    {
   //    Serial.write(char_array);
-
   //  Ready_To_Send();
   //  Serial3.write(char_array);
   //  Ready_To_Send();
@@ -102,6 +101,11 @@ void loop(){
 
 if(Temp_Measuring_State == 1)
 {
+  pinMode(20,INPUT);
+  digitalWrite(20,INPUT_PULLUP);
+  pinMode(21,INPUT);
+  digitalWrite(21,INPUT_PULLUP);
+
   Serial.print("Waiting for triggering");
   pinMode(Gun_Trig_Pin,INPUT);
   digitalWrite(Gun_Trig_Pin,INPUT_PULLUP);
@@ -120,14 +124,16 @@ if(Temp_Measuring_State == 1)
   delay(1000);
   if (!gun_I2C.i2c_init()) // initialize I2C module
   Serial.println("I2C init failed");
-
-  if (!gun_I2C.i2c_start((disk1<<1)|I2C_WRITE)) { // init transfer
-        Serial.println("I2C device busy");
-        return;
-    }
-
+  
+    
     for(int i=80;i<95;i++)
     {
+      if (!gun_I2C.i2c_start((disk1<<1)|I2C_WRITE)) 
+      { // init transfer
+        Serial.println("I2C device busy");
+        return;
+      }
+
     gun_I2C.i2c_write(i); // send memory to device
     gun_I2C.i2c_rep_start((disk1<<1)|I2C_READ); // restart for reading
     data_array[i] = gun_I2C.i2c_read(true); // read one byte and send NAK afterwards
@@ -135,19 +141,17 @@ if(Temp_Measuring_State == 1)
     Serial.print(i);
     Serial.print("  ");
     Serial.println(data_array[i],HEX);
-    delay(10);
     }
     temperature = ((data_array[93]<<8)|(data_array[92]))/100.0;
     Serial.print("The temperature is ");
     Serial.print(temperature);
 
-      if (!gun_I2C.i2c_start((disk1<<1)|I2C_WRITE)) { // init transfer
+for(int i = 0;i<11;i++)
+{
+    if (!gun_I2C.i2c_start((disk1<<1)|I2C_WRITE)) { // init transfer
         Serial.println("I2C device busy");
         return;
     }
-
-for(int i = 0;i<11;i++)
-{
     gun_I2C.i2c_write(i); // send memory to device
     gun_I2C.i2c_write(0);
     gun_I2C.i2c_stop(); // stop communication
