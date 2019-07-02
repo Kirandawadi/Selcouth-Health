@@ -7,6 +7,10 @@ int data_array[20] = {0};
 extern char *char_array;
 extern void Ready_To_Send(void);
 extern float temperature;
+#define SAMPLE 1
+#define SEND 0
+
+int ecg_ADC = 0;
 
 void HandShake_Config(void)
 {
@@ -30,6 +34,12 @@ void Temperature_Sensor::Pins_Initializations()
   digitalWrite(Gun_Eeprom_Power_Pin,LOW);
   digitalWrite(Gun_Power_Pin,LOW);
   digitalWrite(Gun_Trig_Pin,LOW);
+
+  //Turn SDA SCL lines LOW at first, so that Display goes off
+  pinMode(20,OUTPUT);
+  pinMode(21,OUTPUT);
+  digitalWrite(20,LOW);
+  digitalWrite(21,LOW);
 }
 
 void Temperature_Sensor::Turn_On_Gun()
@@ -172,7 +182,42 @@ int Height_Measurement::Get_Height(int unit)
   return 0;
   
 }
-void ECG::Start_Converison()
+
+void BIA::Activate(void)
+{
+  pinMode(BIA_Trigger_Pin,OUTPUT);
+  digitalWrite(BIA_Trigger_Pin,HIGH);
+  delay(500);
+  digitalWrite(BIA_Trigger_Pin,LOW);
+}
+
+void BIA::Pins_Initializations(void)
 {
 
+}
+
+void ECG::Pins_Initializations(void)
+{
+  pinMode(37, INPUT); // Setup for leads off detection LO +
+  pinMode(39, INPUT); // Setup for leads off detection LO -
+}
+
+void ECG::Send_Data(int sample)
+{
+    if((digitalRead(37) == 1)||(digitalRead(39) == 1)){
+      Serial.println('!');
+    }
+    else
+    {
+      //ecg_ADC = analogRead(A8);
+  
+      // send the value of analog input 8 to Raspberry Pi
+        Serial3.print(analogRead(A8));
+        Serial3.print('o');
+
+      // send the value of analog input 8 to serial monitor
+     Serial.println(analogRead(A8));
+    }
+    //Wait for a bit to keep serial data from saturating
+    delay(1);
 }

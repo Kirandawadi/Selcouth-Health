@@ -2,7 +2,11 @@
 #include <SlowSoftI2CMaster.h>
 #include <Wire.h>    
 #include "Selcouth.h"
+
 #define disk1 0x50    //Address of 24LC256 eeprom chip 
+#define SAMPLE 1
+#define SEND 0
+
 char data = 0;
 unsigned int address = 0;
 extern int data_array[];
@@ -13,83 +17,131 @@ int to_send = 0;
 int counter= 0,checker = 0;
 int Temp_Measuring_State = 0;
  int BP_Measuring_State = 0;
- int Systolic_Pressure = 120, Diastolic_Pressure = 80, Heart_Beat = 75;
+ int Systolic_Pressure = 120, Diastolic_Pressure = 80, Heart_Beat = 75; 
 
 void readEEPROM(int deviceaddress, unsigned int eeaddress );
 void eraseEEPROM(int deviceaddress, unsigned int eeaddress, byte data );
-void Read_hardware_I2C();
-void Erase_hardware_I2C();
+void Read_software_I2C();
+void Erase_software_I2C();
 
  //**************Creating Objects***********
 Temperature_Sensor temp(Gun_Power_Pin,Gun_Eeprom_Power_Pin,Gun_Trig_Pin);
 BP_Meter bp(BP_Power_Pin,BP_Measure_Pin);
+BIA bia;
+ECG ecg;
 SlowSoftI2CMaster si = SlowSoftI2CMaster(24, 26, true);
 SlowSoftI2CMaster gun_I2C = SlowSoftI2CMaster(20, 21, true);
-
-//*******************Gun Specials********************
 
 void setup(void)
 {
   HandShake_Config();
-  Serial.begin(9600);
-  Serial3.begin(9600);
-  //Wire.begin(disk1);  
-
+  Serial.begin(9600);           //For Arduino
+  Serial2.begin(38400);       //For Bluetooth
+  Serial3.begin(9600);        //From Raspberry Pi
+  //Turning off I2C at first
+  //Wire.begin(disk1);                  !!!!!!!!!!!!TWEANKING THIS THING 
   temp.Pins_Initializations();
   bp.Pins_Initializations();
-  bp.Turn_Off();
-  temp.Turn_Off_Gun();
-  //delay(3000);
-  Serial.print("Resetted");
+  ecg.Pins_Initializations();
 
+  bp.Turn_Off();
+  
+  temp.Turn_Off_Gun();
+  temp.Turn_Off_Eeprom(); 
+
+  Serial.print("Resetted");
+  Serial2.print("Resetted");
 }
  
 void loop(){ 
-
- if(Serial.available())
+ if(Serial3.available())
   {
-    data = char(Serial.read());
+    data = char(Serial3.read());
     if(data == '0')
     {
       delay(2000);
       Ready_To_Send();
       Serial3.print("173h");
-      Ready_To_Send();
-    }
 
-    else if(data == '2')
-   {
-  //    Serial.write(char_array);
-  //  Ready_To_Send();
-  //  Serial3.write(char_array);
-  //  Ready_To_Send();
-      Serial.write("Entered");
-      bp.Turn_On();
-      delay(8000);
-      Serial.print("Measuring ON");
-      bp.Start_Measuring();
-      BP_Measuring_State  =1;
-   }
+      Ready_To_Send();
+      Serial.print("173h");
+    }
 
     else if(data == '1')
     {
       temp.Turn_On_Eeprom();
       Serial.print("Perform Relay Action;Join the Power Pin");
-      delay(2000);
+      Serial2.print("Perform Relay Action;Join the Power Pin");
+      delay(2000); 
       temp.Turn_On_Gun();
       Serial.print("Joined");
+      Serial2.print("Joined");
       Temp_Measuring_State = 1;
     } 
 
+     else if (data == '2')
+  {
+    Serial.print("Activated");
+      delay(2000);
+      bia.Activate();
+  }
+
+    else if(data == '3')
+   {
+      Serial.write("Entered");
+      Serial2.write("Entered");
+      bp.Turn_On();
+      delay(8000);
+      Serial.print("Measuring ON");
+      Serial2.print("Measuring ON");
+      bp.Start_Measuring();
+      BP_Measuring_State  =1;
+   }
+   /* 
+    else if(data == '4')
+    {
+      delay(3000);
+      
+      //delay(200);
+      Ready_To_Send();
+      delay(200);
+      Ready_To_Send();
+   
+      // for(int i =0;i<100;i++)
+      // {
+      //   Serial3.print(i);
+        
+      // }
+      // Ready_To_Send();
+      // Ready_To_Send();
+      // Ready_To_Send();
+      while (1)
+      {   
+          ecg.Send_Data(SEND);
+      }
+      
+    //   //Sample the Values at first
+    //   for(int i =0;i<500;i++)
+    //   {
+    //     ecg.Send_Data(SAMPLE);
+    //   }
+
+    //  for(int i =0;i<1000;i++)
+    //   {
+    //     ecg.Send_Data(SEND);
+    //   }
+    }*/
+
     else if (data == 'r')
     {
-      Serial.print("R in");
       temp.Turn_On_Eeprom();
-      delay(2000);
+      Wire.begin(disk1);
+      delay(200);
       readEEPROM(disk1, address );
       temperature = ((data_array[2]<<8)|(data_array[1]))/100.0;
-      Serial.print("The temperature is ");
+      //Serial.print("The temperature is ");
       Serial.print(temperature);
+      Serial2.print(temperature);
       to_send = int(temperature*100);
       Ready_To_Send();
       Serial3.print(to_send);
@@ -97,6 +149,8 @@ void loop(){
       Ready_To_Send();
       eraseEEPROM(disk1, address,0);
         }
+
+
   }
 
 if(Temp_Measuring_State == 1)
@@ -114,53 +168,20 @@ if(Temp_Measuring_State == 1)
   while(digitalRead(Gun_Trig_Pin) !=0)
   {
     Serial.print("I am HIGH\n");
+    Serial2.print("I am HIGH\n");
     delay(100);
   }
   Serial.print("I am pressed\n");
+  Serial2.print("I am pressed\n");
 
   Serial.print("Now its time to turn off relay");
-  delay(6000);
+  delay(4500);
   temp.Turn_Off_Gun();
-  delay(1000);
-  if (!gun_I2C.i2c_init()) // initialize I2C module
-  Serial.println("I2C init failed");
-  
-    
-    for(int i=80;i<95;i++)
-    {
-      if (!gun_I2C.i2c_start((disk1<<1)|I2C_WRITE)) 
-      { // init transfer
-        Serial.println("I2C device busy");
-        return;
-      }
 
-    gun_I2C.i2c_write(i); // send memory to device
-    gun_I2C.i2c_rep_start((disk1<<1)|I2C_READ); // restart for reading
-    data_array[i] = gun_I2C.i2c_read(true); // read one byte and send NAK afterwards
-    gun_I2C.i2c_stop(); // stop communication
-    Serial.print(i);
-    Serial.print("  ");
-    Serial.println(data_array[i],HEX);
-    }
-    temperature = ((data_array[93]<<8)|(data_array[92]))/100.0;
-    Serial.print("The temperature is ");
-    Serial.print(temperature);
-
-for(int i = 0;i<11;i++)
-{
-    if (!gun_I2C.i2c_start((disk1<<1)|I2C_WRITE)) { // init transfer
-        Serial.println("I2C device busy");
-        return;
-    }
-    gun_I2C.i2c_write(i); // send memory to device
-    gun_I2C.i2c_write(0);
-    gun_I2C.i2c_stop(); // stop communication
-    Serial.write("Erased");
-}
-  // Ready_To_Send();1
-  // Serial3.print("y");
-  // Ready_To_Send();
-  
+  Ready_To_Send();
+  Serial3.print("y");
+  Ready_To_Send();
+   Serial.print("y");
   Temp_Measuring_State = 0;
   }
 
@@ -173,19 +194,20 @@ for(int i = 0;i<11;i++)
     while(digitalRead(26) !=0)
   {
     Serial.print("High\n");
+    Serial2.print("High\n");
     //delay(100);
   }
-
+ 
    Serial.print("Out of LOOP\n");
-  delay(2000);
+  delay(1500);
   if (!si.i2c_init()) // initialize I2C module
   Serial.println("I2C init failed");
 
-  Read_hardware_I2C();
+  Read_software_I2C();
   BP_Measuring_State = 0;
-  Erase_hardware_I2C();
+  Erase_software_I2C();
 }
-  }
+  } 
  
 void eraseEEPROM(int deviceaddress, unsigned int eeaddress, byte data ) 
 {
@@ -199,6 +221,7 @@ void eraseEEPROM(int deviceaddress, unsigned int eeaddress, byte data )
    Serial.print(i);
     Serial.write("Erasing");
   }
+   Serial2.write(" ERASED!!");
 }
  
 void readEEPROM(int deviceaddress, unsigned int eeaddress ) 
@@ -206,7 +229,7 @@ void readEEPROM(int deviceaddress, unsigned int eeaddress )
   byte rdata = 0xFF;
   int x=0;
   
-  Serial.print("Reading from Eeprom\n");
+  Serial.print("R\n");
     for(int i=79; i<83; i++)
     {
       x= i-79;
@@ -220,7 +243,7 @@ void readEEPROM(int deviceaddress, unsigned int eeaddress )
     }
 }
 
-void Read_hardware_I2C()
+void Read_software_I2C()
 {
   Serial.println("Receiving from Eeprom \n");
   if (!si.i2c_start((disk1<<1)|I2C_WRITE)) { // init transfer
@@ -251,17 +274,17 @@ void Read_hardware_I2C()
     Diastolic_Pressure = data_array[9];
     Heart_Beat = data_array[10]; 
 }
-    
+
    delay(1000);
    sprintf(char_array,"%ds%dd%dh",Systolic_Pressure,Diastolic_Pressure,Heart_Beat);
    Serial.write(char_array);
-
+  
    Ready_To_Send();
    Serial3.write(char_array);
    Ready_To_Send();
 }
 
-void Erase_hardware_I2C()
+void Erase_software_I2C()
 {
  if (!si.i2c_start((disk1<<1)|I2C_WRITE)) { // init transfer
         Serial.println("I2C device busy");
@@ -271,4 +294,5 @@ void Erase_hardware_I2C()
     si.i2c_write(1);
     si.i2c_stop(); // stop communication
     Serial.write("Written 1");
+    Serial2.write("Written 1");
 }

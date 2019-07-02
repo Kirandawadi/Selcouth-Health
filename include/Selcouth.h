@@ -58,14 +58,19 @@ class Height_Measurement
   int height_cms;
 };
 
+class BIA
+{
+  public:
+  void Activate(void);
+  void Pins_Initializations(void);
+
+};
+
 class ECG
 {
   public:
-  void Start_Converison();
-
-  private:
-  
+  void Send_Data(int SAMPLE);
+  void Pins_Initializations(void);
 };
-
 
 #endif

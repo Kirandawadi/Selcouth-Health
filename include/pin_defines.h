@@ -8,6 +8,7 @@
 #define Gun_Trig_Pin 11
 #define BP_Power_Pin 5
 #define BP_Measure_Pin 22
+#define BIA_Trigger_Pin 23
 
 #define INTERRUPT 19
 
