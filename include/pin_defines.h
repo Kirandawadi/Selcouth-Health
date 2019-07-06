@@ -10,7 +10,7 @@
 #define BP_Measure_Pin 22
 #define BIA_Trigger_Pin 23
 
-#define INTERRUPT 19
+#define INTERRUPT 3
 
 #define disk1 0x50
 

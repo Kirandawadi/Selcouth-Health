@@ -2,6 +2,7 @@
 #include <SlowSoftI2CMaster.h>
 #include <Wire.h>    
 #include "Selcouth.h"
+#include "tfMini.h"
 
 #define disk1 0x50    //Address of 24LC256 eeprom chip 
 #define SAMPLE 1
@@ -13,11 +14,13 @@ extern int data_array[];
 float temperature = 0;
 char char_array[100];
 int to_send = 0;
+float height = 0;
 
 int counter= 0,checker = 0;
 int Temp_Measuring_State = 0;
- int BP_Measuring_State = 0;
- int Systolic_Pressure = 120, Diastolic_Pressure = 80, Heart_Beat = 75; 
+int BP_Measuring_State = 0;
+int Height_Measuring_State = 0;
+int Systolic_Pressure = 120, Diastolic_Pressure = 80, Heart_Beat = 75; 
 
 void readEEPROM(int deviceaddress, unsigned int eeaddress );
 void eraseEEPROM(int deviceaddress, unsigned int eeaddress, byte data );
@@ -36,13 +39,15 @@ void setup(void)
 {
   HandShake_Config();
   Serial.begin(9600);           //For Arduino
-  Serial2.begin(38400);       //For Bluetooth
+  Serial1.begin(115200);    //For LIDAR
+  Serial2.begin(9600);       //For Bluetooth
   Serial3.begin(9600);        //From Raspberry Pi
   //Turning off I2C at first
   //Wire.begin(disk1);                  !!!!!!!!!!!!TWEANKING THIS THING 
   temp.Pins_Initializations();
   bp.Pins_Initializations();
   ecg.Pins_Initializations();
+  tfMini_Initialize();
 
   bp.Turn_Off();
   
@@ -54,17 +59,25 @@ void setup(void)
 }
  
 void loop(){ 
+   Serial2.print("Resetted");
  if(Serial3.available())
   {
     data = char(Serial3.read());
     if(data == '0')
     {
-      delay(2000);
+      Height_Measuring_State = 1;
+      //Serial.print("AAYO");
+      height = get_Height();
+      // Serial.print("\r\n Sakkyo");
+      //  Serial2.print("\r\n Sakkyo");
+      // delay(1000);
       Ready_To_Send();
-      Serial3.print("173h");
+      Serial3.print(int(height));
+      Serial3.print("h");
+      Ready_To_Send();
+      Serial.print("\r\n The height is: ");
+      Serial.print(height);
 
-      Ready_To_Send();
-      Serial.print("173h");
     }
 
     else if(data == '1')
@@ -97,40 +110,9 @@ void loop(){
       bp.Start_Measuring();
       BP_Measuring_State  =1;
    }
-   /* 
-    else if(data == '4')
-    {
-      delay(3000);
-      
-      //delay(200);
-      Ready_To_Send();
-      delay(200);
-      Ready_To_Send();
    
-      // for(int i =0;i<100;i++)
-      // {
-      //   Serial3.print(i);
-        
-      // }
-      // Ready_To_Send();
-      // Ready_To_Send();
-      // Ready_To_Send();
-      while (1)
-      {   
-          ecg.Send_Data(SEND);
-      }
-      
-    //   //Sample the Values at first
-    //   for(int i =0;i<500;i++)
-    //   {
-    //     ecg.Send_Data(SAMPLE);
-    //   }
-
-    //  for(int i =0;i<1000;i++)
-    //   {
-    //     ecg.Send_Data(SEND);
-    //   }
-    }*/
+    else if(data == '4')
+    {}
 
     else if (data == 'r')
     {
@@ -149,8 +131,6 @@ void loop(){
       Ready_To_Send();
       eraseEEPROM(disk1, address,0);
         }
-
-
   }
 
 if(Temp_Measuring_State == 1)
@@ -207,7 +187,8 @@ if(Temp_Measuring_State == 1)
   BP_Measuring_State = 0;
   Erase_software_I2C();
 }
-  } 
+
+} 
  
 void eraseEEPROM(int deviceaddress, unsigned int eeaddress, byte data ) 
 {
