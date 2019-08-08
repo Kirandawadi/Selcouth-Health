@@ -68,9 +68,15 @@ class BIA
 
 class ECG
 {
+  private:
+  int L0_plus = 37, L0_minus = 39;
+  int channel = PIN_A1;
+  int relay = PIN_A15;
   public:
   void Send_Data(int SAMPLE);
   void Pins_Initializations(void);
+  void Break_Connection(void);
+  void Make_Connection(void);
 };
 
 #endif

@@ -115,21 +115,8 @@ float get_Height(void)
   float h = 0;
 
   delay(3000);
-//     for( uint8_t fvi = 1; fvi <=10; ++fvi)
-//   {
-//       if( tfmP.getData( tfDist, tfFlux, tfTemp)) // Get data from the device.
-//       {
-//         printf( " Testing Distance:", tfDist);           // Display the distance.
-//         break;                                   // Escape this sub-loop
-//       }
-//       else                        // If the command fails...
-//       {
-//         tfmP.printStatus( true);  // display the error.
-//       }
-//    delay(10);       // Delay to match the 100Hz data frame rate.
-//   }
 
-  for( uint8_t fvi = 1; fvi <=8; ++fvi)
+  for( uint8_t fvi = 1; fvi <=12; ++fvi)
   {
       HEIGHT = 219.00 - (tfmP.getData( tfDist, tfFlux, tfTemp));
 

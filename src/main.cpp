@@ -15,6 +15,7 @@ float temperature = 0;
 char char_array[100];
 int to_send = 0;
 float height = 0;
+extern int ecg_data[];
 
 int counter= 0,checker = 0;
 int Temp_Measuring_State = 0;
@@ -59,25 +60,33 @@ void setup(void)
 }
  
 void loop(){ 
-   Serial2.print("Resetted");
+
+ /* ecg.Break_Connection();
+  ecg.Send_Data(2000);
+  ecg.Make_Connection();
+  ecg.Send_Data(2000);*/
+  
  if(Serial3.available())
   {
     data = char(Serial3.read());
     if(data == '0')
     {
       Height_Measuring_State = 1;
-      //Serial.print("AAYO");
+      Serial.print("AAYO");
       height = get_Height();
-      // Serial.print("\r\n Sakkyo");
-      //  Serial2.print("\r\n Sakkyo");
-      // delay(1000);
       Ready_To_Send();
+      delay(1000);
+      // for(int i=0;i<1;i++)
+      // {
+      //    Serial3.print(int(height));
+      // Serial3.print("h");
+      //   delay(1);
+      // }
       Serial3.print(int(height));
       Serial3.print("h");
-      Ready_To_Send();
+      //Ready_To_Send();
       Serial.print("\r\n The height is: ");
       Serial.print(height);
-
     }
 
     else if(data == '1')
@@ -112,7 +121,11 @@ void loop(){
    }
    
     else if(data == '4')
-    {}
+    {
+      ecg.Break_Connection();
+      ecg.Send_Data(1000);
+      ecg.Make_Connection();
+    }
 
     else if (data == 'r')
     {
@@ -130,7 +143,7 @@ void loop(){
       Serial3.print("t");
       Ready_To_Send();
       eraseEEPROM(disk1, address,0);
-        }
+    }
   }
 
 if(Temp_Measuring_State == 1)
@@ -177,7 +190,7 @@ if(Temp_Measuring_State == 1)
     Serial2.print("High\n");
     //delay(100);
   }
- 
+  //delay(5000);
    Serial.print("Out of LOOP\n");
   delay(1500);
   if (!si.i2c_init()) // initialize I2C module
@@ -187,7 +200,6 @@ if(Temp_Measuring_State == 1)
   BP_Measuring_State = 0;
   Erase_software_I2C();
 }
-
 } 
  
 void eraseEEPROM(int deviceaddress, unsigned int eeaddress, byte data ) 
@@ -261,6 +273,7 @@ void Read_software_I2C()
    Serial.write(char_array);
   
    Ready_To_Send();
+   delay(1000);
    Serial3.write(char_array);
    Ready_To_Send();
 }
