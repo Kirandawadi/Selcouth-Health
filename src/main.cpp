@@ -28,7 +28,7 @@ void eraseEEPROM(int deviceaddress, unsigned int eeaddress, byte data );
 void Read_software_I2C();
 void Erase_software_I2C();
 
- //**************Creating Objects***********
+//**************Creating Objects***********
 Temperature_Sensor temp(Gun_Power_Pin,Gun_Eeprom_Power_Pin,Gun_Trig_Pin);
 BP_Meter bp(BP_Power_Pin,BP_Measure_Pin);
 BIA bia;
@@ -36,27 +36,36 @@ ECG ecg;
 SlowSoftI2CMaster si = SlowSoftI2CMaster(24, 26, true);
 SlowSoftI2CMaster gun_I2C = SlowSoftI2CMaster(20, 21, true);
 
+void Random_Send(void)
+{
+   delay(500);
+   for(int i=0;i<5;i++)
+      {
+      Serial3.print("a");
+      delay(1);
+      }
+}
+
 void setup(void)
 {
   HandShake_Config();
   Serial.begin(9600);           //For Arduino
   Serial1.begin(115200);    //For LIDAR
   Serial2.begin(9600);       //For Bluetooth
-  Serial3.begin(9600);        //From Raspberry Pi
+  Serial3.begin(115200);        //From Raspberry Pi
   //Turning off I2C at first
-  //Wire.begin(disk1);                  !!!!!!!!!!!!TWEANKING THIS THING 
+  //Wire.begin(disk1);                  !!!!!!!!!!!!TWEAKING THIS THING 
   temp.Pins_Initializations();
   bp.Pins_Initializations();
   ecg.Pins_Initializations();
   tfMini_Initialize();
-
+  bia.Pins_Initializations();
   bp.Turn_Off();
   
   temp.Turn_Off_Gun();
   temp.Turn_Off_Eeprom(); 
 
   Serial.print("Resetted");
-  Serial2.print("Resetted");
 }
  
 void loop(){ 
@@ -74,17 +83,11 @@ void loop(){
       Height_Measuring_State = 1;
       Serial.print("AAYO");
       height = get_Height();
-      Ready_To_Send();
-      delay(1000);
-      // for(int i=0;i<1;i++)
-      // {
-      //    Serial3.print(int(height));
-      // Serial3.print("h");
-      //   delay(1);
-      // }
+      Ready_To_Send(); 
+      Random_Send();
       Serial3.print(int(height));
       Serial3.print("h");
-      //Ready_To_Send();
+      //Ready_To_Send(); 
       Serial.print("\r\n The height is: ");
       Serial.print(height);
     }
@@ -113,7 +116,7 @@ void loop(){
       Serial.write("Entered");
       Serial2.write("Entered");
       bp.Turn_On();
-      delay(8000);
+      delay(2000);
       Serial.print("Measuring ON");
       Serial2.print("Measuring ON");
       bp.Start_Measuring();
@@ -132,16 +135,23 @@ void loop(){
       temp.Turn_On_Eeprom();
       Wire.begin(disk1);
       delay(200);
+      Serial.print("Reading EEprom");
       readEEPROM(disk1, address );
+      /*****************Extras ******************/
+      Serial.println(data_array[0]);
+      Serial.println(data_array[1]);
+      Serial.println(data_array[2]);
+      /*****************Extras ******************/
       temperature = ((data_array[2]<<8)|(data_array[1]))/100.0;
       //Serial.print("The temperature is ");
       Serial.print(temperature);
       Serial2.print(temperature);
       to_send = int(temperature*100);
-      Ready_To_Send();
+      Ready_To_Send(); 
+      Random_Send();
       Serial3.print(to_send);
       Serial3.print("t");
-      Ready_To_Send();
+
       eraseEEPROM(disk1, address,0);
     }
   }
@@ -168,13 +178,14 @@ if(Temp_Measuring_State == 1)
   Serial2.print("I am pressed\n");
 
   Serial.print("Now its time to turn off relay");
-  delay(4500);
+  delay(7000);
   temp.Turn_Off_Gun();
 
   Ready_To_Send();
+  Random_Send();
   Serial3.print("y");
-  Ready_To_Send();
-   Serial.print("y");
+ 
+  Serial.print("y");
   Temp_Measuring_State = 0;
   }
 
@@ -192,8 +203,8 @@ if(Temp_Measuring_State == 1)
   }
   //delay(5000);
    Serial.print("Out of LOOP\n");
-  delay(1500);
-  if (!si.i2c_init()) // initialize I2C module
+  delay(3000);
+  if (!si.i2c_init()) // initialize I2C module1
   Serial.println("I2C init failed");
 
   Read_software_I2C();
@@ -211,10 +222,10 @@ void eraseEEPROM(int deviceaddress, unsigned int eeaddress, byte data )
     Wire.write(data);
     Wire.endTransmission();
     eeaddress = i ;
-   Serial.print(i);
-    Serial.write("Erasing");
+    // Serial.print(i);
+    // Serial.write("E");
   }
-   Serial2.write(" ERASED!!");
+    Serial.write("E");
 }
  
 void readEEPROM(int deviceaddress, unsigned int eeaddress ) 
@@ -238,7 +249,8 @@ void readEEPROM(int deviceaddress, unsigned int eeaddress )
 
 void Read_software_I2C()
 {
-  Serial.println("Receiving from Eeprom \n");
+  Serial.println("R\n");
+  delay(300);
   if (!si.i2c_start((disk1<<1)|I2C_WRITE)) { // init transfer
         Serial.println("I2C device busy");
         return;
@@ -273,9 +285,8 @@ void Read_software_I2C()
    Serial.write(char_array);
   
    Ready_To_Send();
-   delay(1000);
+   Random_Send();
    Serial3.write(char_array);
-   Ready_To_Send();
 }
 
 void Erase_software_I2C()

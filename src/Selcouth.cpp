@@ -1315,6 +1315,7 @@ void BP_Meter::Pins_Initializations()
   digitalWrite(BP_Measure_Pin,HIGH); //Try INPUT_PULLUP also here!!!!!!!!!!!!!!!!!!!!!!
   digitalWrite(BP_Power_Pin,LOW);
 }
+
 void BP_Meter::Turn_On()
 {
 digitalWrite(BP_Power_Pin,HIGH);
@@ -1395,7 +1396,8 @@ void BIA::Activate(void)
 
 void BIA::Pins_Initializations(void)
 {
-
+  pinMode(BIA_Trigger_Pin,OUTPUT);
+  digitalWrite(BIA_Trigger_Pin,LOW);
 }
 
 void ECG::Pins_Initializations(void)
@@ -1404,10 +1406,12 @@ void ECG::Pins_Initializations(void)
   pinMode(L0_minus, INPUT); // Setup for leads off detection LO -
 }
 
-
-
 void ECG::Send_Data(int sample)
 {
+  // Serial3.end();
+  // delay(200);
+  // Serial3.begin(115200);
+  
   Serial.println("Sending ECG data");
   Ready_To_Send();
   for(int i = 0;i<1200;i++)
@@ -1432,7 +1436,9 @@ void ECG::Send_Data(int sample)
      //Wait for a bit to keep serial data from saturating
      delay(1);
     }
-  delay(1000);
+  // Serial3.end();
+  // delay(200);
+  // Serial3.begin(9600);
 }
 
 void ECG::Break_Connection(void)
