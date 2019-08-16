@@ -3,9 +3,12 @@
 #include "Selcouth.h"
 #include <Wire.h>
 
+volatile char to_Send = '0';
+const byte interruptPin = 56;
+
 int data_array[20] = {0};
-extern char *char_array;
-extern void Ready_To_Send(void);
+extern char char_array[100];
+extern void Begin_Sending(void);
 extern float temperature;
 #define SAMPLE 1
 #define SEND 0
@@ -1220,13 +1223,6 @@ void HandShake_Config(void)
   digitalWrite(INTERRUPT,HIGH);
 }
 
-void Ready_To_Send(void)
-{
- digitalWrite(INTERRUPT,LOW);
- delay(1000);
- digitalWrite(INTERRUPT,HIGH);
-}
-
 void Temperature_Sensor::Pins_Initializations()
 {
   pinMode(Gun_Power_Pin,OUTPUT);
@@ -1346,7 +1342,6 @@ void BP_Meter::Eeprom_Erase(int deviceaddress, unsigned int eeaddress, byte data
 
 void BP_Meter::Get_Data()
 {
-  int x;
   uint8_t rdata = 0xFF;
   Serial.println("Receiving from Eeprom \n");
     for(int i=0; i<15; i++)
@@ -1376,7 +1371,7 @@ void BP_Meter::Get_Data()
    Serial.write(char_array);
 
    Serial1.write(char_array);
-   Ready_To_Send();
+   Begin_Sending();
    Serial1.write(char_array);
 }
 
@@ -1388,6 +1383,7 @@ int Height_Measurement::Get_Height(int unit)
 
 void BIA::Activate(void)
 {
+  delay(2500);
   pinMode(BIA_Trigger_Pin,OUTPUT);
   digitalWrite(BIA_Trigger_Pin,HIGH);
   delay(500);
@@ -1413,7 +1409,7 @@ void ECG::Send_Data(int sample)
   // Serial3.begin(115200);
   
   Serial.println("Sending ECG data");
-  Ready_To_Send();
+  Begin_Sending();
   for(int i = 0;i<1200;i++)
    {
   //   if((digitalRead(L0_plus) == 1)||(digitalRead(L0_minus) == 1)){
@@ -1436,6 +1432,8 @@ void ECG::Send_Data(int sample)
      //Wait for a bit to keep serial data from saturating
      delay(1);
     }
+    End_Sending();
+
   // Serial3.end();
   // delay(200);
   // Serial3.begin(9600);
@@ -1452,4 +1450,58 @@ void ECG::Make_Connection(void)
 {
   pinMode(relay , OUTPUT);
   digitalWrite(relay,LOW);
+}
+
+
+void Begin_Sending(void)
+{
+  //For callback On the other Side
+   digitalWrite(INTERRUPT,LOW);
+   delay(1000);
+   digitalWrite(INTERRUPT,HIGH);
+
+  //  delay(100);
+  //  for(int i=0;i<5;i++)
+  //     {
+  //     Serial3.print("a");
+  //     }
+}
+
+void End_Sending(void)
+{
+  Serial3.print("z");
+}
+
+void Emergency_Button_Initialization(void)
+{
+  pinMode(interruptPin,INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), Pressed, LOW);
+}
+
+void Pressed() {
+
+detachInterrupt(digitalPinToInterrupt(interruptPin));
+
+to_Send = 'r';
+my_delay(1300);
+if(digitalRead(interruptPin) == LOW)
+{
+  to_Send = 's';
+}
+
+Serial.println(to_Send);
+Begin_Sending();
+Serial3.println(to_Send);
+
+to_Send  = '0';
+while((digitalRead(interruptPin) == LOW));
+attachInterrupt(digitalPinToInterrupt(interruptPin), Pressed, LOW);
+}
+
+void my_delay(int msec)
+{
+    for(int i =0;i<msec;i++)
+{
+  delayMicroseconds(1000);
+}
 }

@@ -87,17 +87,18 @@ void saveSettings()
 
 void tfMini_Initialize(void)
 {
-    printf_begin();          // Initialize printf.
-    printf("\r\nTFMPlus Library Example - 07JUN2019\r\n");  // say 'hello'
+   // printf_begin();          // Initialize printf.
+    //printf("\r\nTFMPlus Library Example - 07JUN2019\r\n");  // say 'hello'
 
     Serial1.begin( 115200);  // Initialize TFMPLus device serial port.
     delay(20);               // Give port time to initalize
     tfmP.begin( &Serial1);   // Initialize device library object and...
                              // pass device serial port to the object.
-
+    
     // Send commands to device during setup.
-    firmwareVersion();
-    frameRate(20);
+    //firmwareVersion();                           I have disabled this
+    //frameRate(20);
+    tfmP.sendCommand( SET_FRAME_RATE, 20);
     //saveSettings();
     //factoryReset();
 
@@ -107,7 +108,7 @@ void tfMini_Initialize(void)
     tfFlux = 0;
     tfTemp = 0;
 
-    delay(500);            // And wait for half a second.
+    delay(500);            // And wait for half a second.rate
 }
 
 float get_Height(void)

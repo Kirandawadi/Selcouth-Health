@@ -28,6 +28,7 @@ void eraseEEPROM(int deviceaddress, unsigned int eeaddress, byte data );
 void Read_software_I2C();
 void Erase_software_I2C();
 
+
 //**************Creating Objects***********
 Temperature_Sensor temp(Gun_Power_Pin,Gun_Eeprom_Power_Pin,Gun_Trig_Pin);
 BP_Meter bp(BP_Power_Pin,BP_Measure_Pin);
@@ -36,18 +37,10 @@ ECG ecg;
 SlowSoftI2CMaster si = SlowSoftI2CMaster(24, 26, true);
 SlowSoftI2CMaster gun_I2C = SlowSoftI2CMaster(20, 21, true);
 
-void Random_Send(void)
-{
-   delay(500);
-   for(int i=0;i<5;i++)
-      {
-      Serial3.print("a");
-      delay(1);
-      }
-}
 
 void setup(void)
 {
+  Emergency_Button_Initialization();        //Initialize the front RED Emergency Button
   HandShake_Config();
   Serial.begin(9600);           //For Arduino
   Serial1.begin(115200);    //For LIDAR
@@ -58,7 +51,6 @@ void setup(void)
   temp.Pins_Initializations();
   bp.Pins_Initializations();
   ecg.Pins_Initializations();
-  tfMini_Initialize();
   bia.Pins_Initializations();
   bp.Turn_Off();
   
@@ -66,28 +58,24 @@ void setup(void)
   temp.Turn_Off_Eeprom(); 
 
   Serial.print("Resetted");
+  Serial3.print("z");
 }
  
 void loop(){ 
 
- /* ecg.Break_Connection();
-  ecg.Send_Data(2000);
-  ecg.Make_Connection();
-  ecg.Send_Data(2000);*/
-  
  if(Serial3.available())
   {
     data = char(Serial3.read());
     if(data == '0')
     {
+      tfMini_Initialize();
       Height_Measuring_State = 1;
       Serial.print("AAYO");
       height = get_Height();
-      Ready_To_Send(); 
-      Random_Send();
+      Begin_Sending(); 
       Serial3.print(int(height));
       Serial3.print("h");
-      //Ready_To_Send(); 
+      End_Sending();
       Serial.print("\r\n The height is: ");
       Serial.print(height);
     }
@@ -106,8 +94,8 @@ void loop(){
 
      else if (data == '2')
   {
-    Serial.print("Activated");
-      delay(2000);
+      Serial.print("Activated");
+      delay(500);
       bia.Activate();
   }
 
@@ -147,12 +135,13 @@ void loop(){
       Serial.print(temperature);
       Serial2.print(temperature);
       to_send = int(temperature*100);
-      Ready_To_Send(); 
-      Random_Send();
+      Begin_Sending(); 
       Serial3.print(to_send);
       Serial3.print("t");
+      End_Sending();
 
       eraseEEPROM(disk1, address,0);
+      
     }
   }
 
@@ -178,12 +167,12 @@ if(Temp_Measuring_State == 1)
   Serial2.print("I am pressed\n");
 
   Serial.print("Now its time to turn off relay");
-  delay(7000);
+  delay(4000);
   temp.Turn_Off_Gun();
 
-  Ready_To_Send();
-  Random_Send();
+  Begin_Sending();
   Serial3.print("y");
+  End_Sending();
  
   Serial.print("y");
   Temp_Measuring_State = 0;
@@ -284,9 +273,9 @@ void Read_software_I2C()
    sprintf(char_array,"%ds%dd%dh",Systolic_Pressure,Diastolic_Pressure,Heart_Beat);
    Serial.write(char_array);
   
-   Ready_To_Send();
-   Random_Send();
+   Begin_Sending();
    Serial3.write(char_array);
+   End_Sending();
 }
 
 void Erase_software_I2C()

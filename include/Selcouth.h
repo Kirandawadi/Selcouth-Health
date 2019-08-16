@@ -79,4 +79,13 @@ class ECG
   void Make_Connection(void);
 };
 
+void Emergency_Button_Initialization();
+void Pressed(void); 
+void my_delay(int msec);
+
+void Begin_Sending(void);
+void End_Sending(void);
+
+
+
 #endif
