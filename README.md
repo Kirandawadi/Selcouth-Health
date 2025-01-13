@@ -2,4 +2,4 @@ Selcouth Health Care is a health booth which can measure 20 different body param
 
 It is developed using **Raspberry Pi (Python)** and **Arduino (C)** and stores patients' data in the **MongoDB** database.
 
-**Demo Video:** https://drive.google.com/file/d/1Wil0Eut2VcpO1wRbnjcqWEPxVg4tb04g/view?usp=sharing
+**Demo Video:** [Link](https://1drv.ms/v/c/b3eb1096e4f4a3a8/Eaij9OSWEOsggLO76wAAAAAB5Cg3MS0OktBLsTI9Tqt2Ug)
